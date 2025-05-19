@@ -17,7 +17,7 @@ public class Game {
         this.service.createOkeyTiles(this.okeyTiles);
 
         int tileIndex = 0;
-        boolean isIndicatorAdded = false;
+        boolean isIndicatorReserved = false;
         for (int i = 0; i < 4; i++) {
             Player p = new Player();
             
@@ -29,16 +29,15 @@ public class Game {
             for (int j = 0; j < handSize; j++) {
                 OkeyTile tmpTile = this.okeyTiles.get(tileIndex);
     
-                if(tmpTile.isIndicator()){
+                if(tmpTile.isIndicator() && !isIndicatorReserved){
                     j = j == 0 ? 0 : j-1;
                     tileIndex++;
-                    isIndicatorAdded = true;
+                    isIndicatorReserved = true;
                     continue;
                 }
 
-                if(!isIndicatorAdded){
-                    p.addOkeyTileToHand(tmpTile);   
-                }
+                p.addOkeyTileToHand(tmpTile);   
+                
                 
                 tileIndex++;
             }
