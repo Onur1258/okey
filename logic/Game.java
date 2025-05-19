@@ -26,7 +26,8 @@ public class Game {
             System.out.println("Player id:" + p.getId());
             System.out.println("Player Hand:");
             p.displayHand();
-            evaluater.calculateScore(p.getHand());
+            int score = evaluater.calculateScore(p.getHand());
+            p.setScore(score);
         }
     }
 }

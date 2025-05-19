@@ -1,6 +1,6 @@
 package inventory;
 
-public class OkeyTile {
+public class OkeyTile implements Comparable<OkeyTile> {
     private int num;
     private String color;
     private boolean isJoker;
@@ -47,5 +47,14 @@ public class OkeyTile {
 
     public void setIndicator(){
         this.isIndicator = true;
+    }
+
+    public void display(){
+        System.out.println(this.color + "-" + this.num + ", Is Joker:" + this.isJoker() + ", Is Indicator:" + this.isIndicator());
+    }
+
+    @Override
+    public int compareTo(OkeyTile o) {
+       return this.num - ((OkeyTile)o).getNum();
     }
 }
