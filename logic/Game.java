@@ -3,54 +3,30 @@ import inventory.*;
 import java.util.ArrayList;
 
 public class Game {
-    private Services service;
     private ArrayList<OkeyTile> okeyTiles;
     private ArrayList<Player> players;
+    private OkeyTile joker;
 
     public Game(){
-        this.service = new Services();
         this.players = new ArrayList<>(4);
         this.okeyTiles = new ArrayList<>(106);
+        this.joker = new OkeyTile(-1, null);
     }
 
     public void initGame(){
-        this.service.createOkeyTiles(this.okeyTiles);
+        Services service = new Services();
+        service.createOkeyTiles(this.okeyTiles, this.joker);// sets joker
+        service.distributeOkeyTilesToPlayers(this.okeyTiles, this.players);
+    }
 
-        int tileIndex = 0;
-        boolean isIndicatorReserved = false;
-        for (int i = 0; i < 4; i++) {
-            Player p = new Player();
-            
-            int handSize = 14;
-            if(i == 0){
-                handSize = 15;
-            }
-            
-            for (int j = 0; j < handSize; j++) {
-                OkeyTile tmpTile = this.okeyTiles.get(tileIndex);
-    
-                if(tmpTile.isIndicator() && !isIndicatorReserved){
-                    j = j == 0 ? 0 : j-1;
-                    tileIndex++;
-                    isIndicatorReserved = true;
-                    continue;
-                }
-
-                p.addOkeyTileToHand(tmpTile);   
-                
-                
-                tileIndex++;
-            }
-            this.players.add(p);
-        }
-        System.out.println(tileIndex);
-        int x = 1;
+    public void evaluateGame(){
+        OkeyHandEvaluater evaluater = new OkeyHandEvaluater(this.joker);
+        System.out.println("Joker:" + this.joker.getColor() + "-" + this.joker.getNum());
         for (Player p : this.players) {
-            System.out.println("Player-" + x);
+            System.out.println("Player id:" + p.getId());
+            System.out.println("Player Hand:");
             p.displayHand();
-
-            System.out.println("--------------------");
-            x++;
+            evaluater.calculateScore(p.getHand());
         }
     }
 }

@@ -17,8 +17,16 @@ public class OkeyTile {
         return this.num;
     }
 
+    public void setNum(int num){
+        this.num = num;
+    }
+
     public String getColor(){
         return this.color;
+    }
+
+    public void setColor(String color){
+        this.color = color;
     }
 
     public boolean isJoker(){
