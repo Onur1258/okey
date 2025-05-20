@@ -90,60 +90,114 @@ public class OkeyHandEvaluater {
         sameNum.add(newTile);   
     }
 
-    private ArrayList<OkeyTile> longestSameColor(ArrayList<OkeyTile> leftovers){
-        HashMap<String, ArrayList<OkeyTile>> colorMap = this.sortSameColor(leftovers);
-
-        ArrayList<OkeyTile> maxSameColor = new ArrayList<>();
-
-        for (int i = leftovers.size()-1; i > 1; i--) {
-            ArrayList<OkeyTile> tmpMaxSameColor = new ArrayList<>();
-            tmpMaxSameColor.add(leftovers.get(i));
-            for (int j = i-1; j > 0; j--){
-                this.addValidSameColor(tmpMaxSameColor, leftovers.get(j));
-            }
-            if(tmpMaxSameColor.size() > maxSameColor.size()){
-                maxSameColor.removeAll(maxSameColor);
-                maxSameColor.addAll(tmpMaxSameColor);
-            }
-        }
-
-       return maxSameColor;
-    }
-
-    private HashMap<String, ArrayList<OkeyTile>> sortSameColor(ArrayList<OkeyTile> list){
+    private ArrayList<OkeyTile> longestSameColor(ArrayList<OkeyTile> list){
         HashMap<String, ArrayList<OkeyTile>> colorMap = new HashMap<String, ArrayList<OkeyTile>>();
-        boolean hasJoker = false;
+        colorMap.put("sarı", new ArrayList<>());
+        colorMap.put("mavi", new ArrayList<>());
+        colorMap.put("siyah", new ArrayList<>());
+        colorMap.put("kırmızı", new ArrayList<>());
+        HashMap<String, ArrayList<OkeyTile>> jokerAndFakeJ = new HashMap<String, ArrayList<OkeyTile>>();
+        jokerAndFakeJ.put("fake", new ArrayList<>());
+        jokerAndFakeJ.put("joker", new ArrayList<>());
+        
+
         for (OkeyTile okeyTile : list) {
-            if(!colorMap.containsKey(okeyTile.getColor())){
-                colorMap.put(okeyTile.getColor(), new ArrayList<>());
+            if(okeyTile.isFakeJoker()){
+                jokerAndFakeJ.get("fake").add(okeyTile);
+                continue;
+            }
+            if(okeyTile.isJoker()){
+                jokerAndFakeJ.get("joker").add(okeyTile);
+                continue;
             }
             colorMap.get(okeyTile.getColor()).add(okeyTile);
         }
-
-        colorMap.forEach((key, value) -> {
-            Collections.sort(value);
-        });
-
-        return colorMap;
-    }
-
-    private void addValidSameColor(ArrayList<OkeyTile> sameColor, OkeyTile newTile){
-        OkeyTile lastTile = sameColor.get(sameColor.size() - 1);
-        if(lastTile.isJoker()){
-            
-        }
-        if(lastTile.isFakeJoker()){
-
-        }
-    }
-
-    private boolean sameColorJokerValidation(OkeyTile lastTile, OkeyTile newTile, int subsetLen){
-        if(lastTile.getNum() == 13){
-            if(newTile.getNum() != 1){
-               return false;
+        ArrayList<OkeyTile> maxUsedSubset = new ArrayList<>();
+        for (String key : colorMap.keySet()) {
+            System.out.println("Coloooormap:" + key);
+            Collections.sort(colorMap.get(key));
+            System.out.println("SOOOORT");
+            ArrayList<OkeyTile> usedSubset = this.findLongestConsecutive(colorMap.get(key), jokerAndFakeJ);
+            if(usedSubset.size() > maxUsedSubset.size()){
+                maxUsedSubset.removeAll(maxUsedSubset);
+                maxUsedSubset.addAll(usedSubset);
             }
         }
-        return true;
+
+        return maxUsedSubset;
+    }
+
+    private ArrayList<OkeyTile> findLongestConsecutive(ArrayList<OkeyTile> list, HashMap<String, ArrayList<OkeyTile>> jMap){
+        ArrayList<OkeyTile> max = new ArrayList<>();
+        ArrayList<OkeyTile> tmpMax = new ArrayList<>();
+        
+        if(list.isEmpty()){
+            return max;
+        }
+
+        int fakeUsage = 0, jokerUsage = 0;
+        int realFakeUsage = 0, realJokerUsage = 0;
+
+        tmpMax.add(list.get(0));
+        int tmpIndex = 0;
+        for (int i = 1; i < list.size(); i++) {
+            if(list.get(i).getNum() == tmpMax.get(tmpIndex).getNum()){
+                continue;
+            }
+
+            if (list.get(i).getNum() == tmpMax.get(tmpIndex).getNum() + 1 || (tmpMax.get(tmpIndex).isJoker() && tmpMax.get(tmpIndex-1).getNum() + 2 == list.get(i).getNum())) {
+                tmpMax.add(list.get(i));
+                tmpIndex++;
+            } else {
+                if(fakeUsage < jMap.get("fake").size()){
+                    if(list.get(i).getColor().equals(this.joker.getColor()) && list.get(i).getNum() == this.joker.getNum() + 1){
+                        tmpMax.add(jMap.get("fake").get(fakeUsage));
+                        tmpIndex++;
+                        fakeUsage++;
+                        i--;
+                        continue;
+                    }
+                }
+                if(jokerUsage < jMap.get("joker").size()){
+                    tmpMax.add(jMap.get("joker").get(jokerUsage));
+                    tmpIndex++;
+                    jokerUsage++;
+                    i--;
+                    continue;
+                }
+                if(tmpMax.size() > max.size()){
+                    max.removeAll(max);
+                    max.addAll(tmpMax);
+                    tmpIndex = 0;
+                    realFakeUsage = fakeUsage;
+                    realJokerUsage = jokerUsage;
+                    jokerUsage = 0;
+                    fakeUsage = 0;
+                }
+                tmpMax.removeAll(tmpMax);
+                tmpMax.add(list.get(i));
+            }
+        }
+        if(tmpMax.size() > max.size()){
+            max.removeAll(max);
+            max.addAll(tmpMax);
+            realFakeUsage = fakeUsage;
+            realJokerUsage = jokerUsage;
+        }
+
+        if(max.get(max.size()-1).getNum() == 13){
+            if(max.get(0).getNum() != 1 && list.get(0).getNum() == 1){
+                max.add(list.get(0));
+            }
+            if(realJokerUsage < jMap.get("joker").size()){
+                max.add(jMap.get("joker").get(realJokerUsage));
+            }
+            if(realFakeUsage < jMap.get("fake").size() && max.get(max.size()-1).getColor().equals(this.joker.getColor()) && this.joker.getNum() == 1){
+                tmpMax.add(jMap.get("fake").get(realFakeUsage));
+            }
+        }
+
+        return max;
     }
 
     private void removeSubset(ArrayList<OkeyTile> mainList, ArrayList<OkeyTile> removedList){

@@ -48,8 +48,8 @@ public class Services {
             }
         }
 
-        okeyTiles.add(new OkeyTile(0, "fake-joker"));
-        okeyTiles.add(new OkeyTile(0, "fake-joker"));
+        okeyTiles.add(new OkeyTile(joker.getNum(), "fake-joker"));
+        okeyTiles.add(new OkeyTile(joker.getNum(), "fake-joker"));
     }
 
     public void distributeOkeyTilesToPlayers(ArrayList<OkeyTile> okeyTiles, ArrayList<Player> players){

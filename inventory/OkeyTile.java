@@ -38,7 +38,7 @@ public class OkeyTile implements Comparable<OkeyTile> {
     }
 
     public boolean isFakeJoker(){
-        return this.num == 0 ? true : false;
+        return this.color.equals("fake-joker") ? true : false;
     }
 
     public boolean isIndicator(){
