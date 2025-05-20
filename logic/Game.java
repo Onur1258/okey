@@ -26,7 +26,10 @@ public class Game {
             System.out.println("Player id:" + p.getId());
             System.out.println("Player Hand:");
             p.displayHand();
+            System.out.println("-------------------");
             int score = evaluater.calculateScore(p.getHand());
+            System.out.println("-------------------");
+            System.out.println("Score:" + score);
             p.setScore(score);
         }
     }

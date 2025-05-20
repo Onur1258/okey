@@ -14,9 +14,23 @@ public class OkeyHandEvaluater {
 
     public int calculateScore(ArrayList<OkeyTile> hand){
         int pairModeUsedTiles = hand.size() - this.piarMode(hand);
+        System.out.println("pairmode eşleşme sayısı:" + pairModeUsedTiles);
+         System.out.println("---------------------------");
+
         int normalModeUsedTiles = hand.size() - this.normalMode(hand);
 
-        return normalModeUsedTiles > pairModeUsedTiles ? normalModeUsedTiles: pairModeUsedTiles;
+       
+        System.out.println("normalmode eşleşme sayısı:" + normalModeUsedTiles);
+
+        int score = normalModeUsedTiles;
+        if(pairModeUsedTiles > normalModeUsedTiles){
+            System.out.println("Player should choose pair mode");
+            score = pairModeUsedTiles;
+        }
+        else{
+            System.out.println("Player should choose normal mode");
+        }
+        return score;
     }
 
     private int normalMode(ArrayList<OkeyTile> hand){
@@ -29,22 +43,56 @@ public class OkeyHandEvaluater {
             for (OkeyTile okeyTile : candidateSameColor) {
                 okeyTile.display();
             }
+            System.out.println("-------------");
             System.out.println("Aynı sayı subset:");
             for (OkeyTile okeyTile : candidateSameNum) {
                 okeyTile.display();
             }
+            System.out.println("-------------");
 
+            ArrayList<OkeyTile> commons = this.commonElements(candidateSameNum, candidateSameColor);
+            
             if(candidateSameNum.size() < 3 && candidateSameColor.size() < 3){
                 break;
             }
-            if(candidateSameColor.size() >= candidateSameNum.size()){
+
+            if(this.chooseNormalModeType(candidateSameNum, candidateSameColor, commons)){
+                System.out.println("Aynı renk seçildi.");
                 this.removeSubset(leftovers, candidateSameColor);
             }
             else{
+                System.out.println("Aynı sayı seçildi.");
                 this.removeSubset(leftovers, candidateSameNum);
             }
+            System.out.println();
         }
         return leftovers.size();
+    }
+
+    private boolean chooseNormalModeType(ArrayList<OkeyTile> candidateSameNum, ArrayList<OkeyTile> candidateSameColor, ArrayList<OkeyTile> commons){
+        //true:same color false: same num
+        if((candidateSameNum.size() == 3 && candidateSameColor.size() == 3)){
+            return true;
+        }
+
+        if(commons.size() == 2 || commons.isEmpty()){
+            return candidateSameNum.size() > candidateSameColor.size() ? false : true;
+        }
+
+        OkeyTile commonTile = commons.get(0);
+        int sameColorIndex = candidateSameColor.indexOf(commonTile) + 1;
+        if(candidateSameColor.size() > 3 && (candidateSameColor.size() - sameColorIndex >= 3 || sameColorIndex > 3)){
+            candidateSameColor.remove(commonTile);
+
+        }
+        if(candidateSameNum.size() > 3){
+            candidateSameNum.remove(commonTile);
+        }
+
+        if(candidateSameNum.size() > candidateSameColor.size()){
+            return false;
+        }
+        return true;
     }
 
     private ArrayList<OkeyTile> longestSameNum(ArrayList<OkeyTile> leftovers){
@@ -97,13 +145,12 @@ public class OkeyHandEvaluater {
         colorMap.put("siyah", new ArrayList<>());
         colorMap.put("kırmızı", new ArrayList<>());
         HashMap<String, ArrayList<OkeyTile>> jokerAndFakeJ = new HashMap<String, ArrayList<OkeyTile>>();
-        jokerAndFakeJ.put("fake", new ArrayList<>());
         jokerAndFakeJ.put("joker", new ArrayList<>());
         
 
         for (OkeyTile okeyTile : list) {
             if(okeyTile.isFakeJoker()){
-                jokerAndFakeJ.get("fake").add(okeyTile);
+                colorMap.get(this.joker.getColor()).add(okeyTile);
                 continue;
             }
             if(okeyTile.isJoker()){
@@ -114,9 +161,7 @@ public class OkeyHandEvaluater {
         }
         ArrayList<OkeyTile> maxUsedSubset = new ArrayList<>();
         for (String key : colorMap.keySet()) {
-            System.out.println("Coloooormap:" + key);
             Collections.sort(colorMap.get(key));
-            System.out.println("SOOOORT");
             ArrayList<OkeyTile> usedSubset = this.findLongestConsecutive(colorMap.get(key), jokerAndFakeJ);
             if(usedSubset.size() > maxUsedSubset.size()){
                 maxUsedSubset.removeAll(maxUsedSubset);
@@ -135,8 +180,8 @@ public class OkeyHandEvaluater {
             return max;
         }
 
-        int fakeUsage = 0, jokerUsage = 0;
-        int realFakeUsage = 0, realJokerUsage = 0;
+        int jokerUsage = 0;
+        int realJokerUsage = 0;
 
         tmpMax.add(list.get(0));
         int tmpIndex = 0;
@@ -145,19 +190,10 @@ public class OkeyHandEvaluater {
                 continue;
             }
 
-            if (list.get(i).getNum() == tmpMax.get(tmpIndex).getNum() + 1 || (tmpMax.get(tmpIndex).isJoker() && tmpMax.get(tmpIndex-1).getNum() + 2 == list.get(i).getNum())) {
+            if ((list.get(i).getNum() == tmpMax.get(tmpIndex).getNum() + 1 && !tmpMax.get(tmpIndex).isJoker()) || (tmpMax.get(tmpIndex).isJoker() && tmpMax.get(tmpIndex-1).getNum() + 2 == list.get(i).getNum())) {
                 tmpMax.add(list.get(i));
                 tmpIndex++;
             } else {
-                if(fakeUsage < jMap.get("fake").size()){
-                    if(list.get(i).getColor().equals(this.joker.getColor()) && list.get(i).getNum() == this.joker.getNum() + 1){
-                        tmpMax.add(jMap.get("fake").get(fakeUsage));
-                        tmpIndex++;
-                        fakeUsage++;
-                        i--;
-                        continue;
-                    }
-                }
                 if(jokerUsage < jMap.get("joker").size()){
                     tmpMax.add(jMap.get("joker").get(jokerUsage));
                     tmpIndex++;
@@ -169,34 +205,30 @@ public class OkeyHandEvaluater {
                     max.removeAll(max);
                     max.addAll(tmpMax);
                     tmpIndex = 0;
-                    realFakeUsage = fakeUsage;
                     realJokerUsage = jokerUsage;
                     jokerUsage = 0;
-                    fakeUsage = 0;
                 }
                 tmpMax.removeAll(tmpMax);
                 tmpMax.add(list.get(i));
+                tmpIndex = 0;
             }
         }
         if(tmpMax.size() > max.size()){
             max.removeAll(max);
             max.addAll(tmpMax);
-            realFakeUsage = fakeUsage;
             realJokerUsage = jokerUsage;
         }
 
         if(max.get(max.size()-1).getNum() == 13){
             if(max.get(0).getNum() != 1 && list.get(0).getNum() == 1){
                 max.add(list.get(0));
-            }
-            if(realJokerUsage < jMap.get("joker").size()){
-                max.add(jMap.get("joker").get(realJokerUsage));
-            }
-            if(realFakeUsage < jMap.get("fake").size() && max.get(max.size()-1).getColor().equals(this.joker.getColor()) && this.joker.getNum() == 1){
-                tmpMax.add(jMap.get("fake").get(realFakeUsage));
+                return max;
             }
         }
-
+        
+        if(realJokerUsage < jMap.get("joker").size()){
+            max.add(jMap.get("joker").get(realJokerUsage));
+        }
         return max;
     }
 
@@ -211,6 +243,9 @@ public class OkeyHandEvaluater {
         for (int i = leftovers.size()-1; i > 1; i--) {
             for (int j = i-1; j > 0; j--) {
                 if(this.isValidPair(leftovers.get(i), leftovers.get(j))){
+                    System.out.println("Pair mode çıkanlar");
+                    leftovers.get(i).display();
+                    leftovers.get(j).display();
                     leftovers.remove(i);
                     leftovers.remove(j);
                     i = leftovers.size() - 1;
@@ -218,7 +253,6 @@ public class OkeyHandEvaluater {
                 }
             }
         }
-
         return leftovers.size();
     }
 
@@ -247,4 +281,19 @@ public class OkeyHandEvaluater {
         return false;
     }
     
+    private ArrayList<OkeyTile> commonElements(ArrayList<OkeyTile> candidateSameNum, ArrayList<OkeyTile> candidateSameColor){
+        ArrayList<OkeyTile> commons = new ArrayList<>(); // max 2 olabilir.
+
+        for (int i = 0; i < candidateSameNum.size(); i++) {
+            for (int j = 0; j < candidateSameColor.size(); j++) {
+                if(candidateSameNum.get(i).equals(candidateSameColor.get(j))){
+                    if(!commons.contains(candidateSameNum.get(i))){
+                        commons.add(candidateSameNum.get(i));
+                    }
+                }
+            }
+        }
+
+        return commons;
+    }
 }
